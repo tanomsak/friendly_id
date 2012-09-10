@@ -256,10 +256,13 @@ issue}[https://github.com/norman/friendly_id/issues/180] for discussion.
       # If the slug base is nil, and the slug field is nil, then we're going to
       # leave the slug column NULL.
       return false if base.nil? && slug_value.nil?
+
       # Otherwise, if this is a new record, we're definitely going to try to
       # create a new slug.
       return true if new_record?
+
       slug_base = normalize_friendly_id(base)
+
       separator = Regexp.escape friendly_id_config.sequence_separator
       # If the slug base (with and without sequence) is different from either the current
       # friendly id or the slug value, then we'll generate a new friendly_id.
@@ -270,8 +273,12 @@ issue}[https://github.com/norman/friendly_id/issues/180] for discussion.
     # Sets the slug.
     # FIXME: This method sucks and the logic is pretty dubious.
     def set_slug(normalized_slug = nil)
+
+      # Champ comment
       if normalized_slug || should_generate_new_friendly_id?
+
         normalized_slug ||= normalize_friendly_id send(friendly_id_config.base)
+
         generator = friendly_id_config.slug_generator_class.new self, normalized_slug
         send "#{friendly_id_config.slug_column}=", generator.generate
       end
