@@ -1,3 +1,4 @@
+# encoding: utf-8
 module FriendlyId
   # The default slug generator offers functionality to check slug strings for
   # uniqueness and, if necessary, appends a sequence to guarantee it.
@@ -74,7 +75,7 @@ module FriendlyId
       # Underscores (matching a single character) and percent signs (matching
       # any number of characters) need to be escaped
       # (While this seems like an excessive number of backslashes, it is correct)
-      # "#{normalized}#{separator}".gsub(/[_%]/, '\\\\\&') + '%'
+      "#{normalized}#{separator}".gsub(/[_%]/, '\\\\\&') + '%'
     end
   end
 end

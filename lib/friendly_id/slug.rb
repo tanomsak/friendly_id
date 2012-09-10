@@ -1,3 +1,4 @@
+# encoding: utf-8
 module FriendlyId
   # A FriendlyId slug stored in an external table.
   #
