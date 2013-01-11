@@ -214,13 +214,26 @@ often better and easier to use {FriendlyId::Slugged slugs}.
 
     private
 
-    # Gets an instance of an anonymous subclass of ActiveRecord::Relation.
+    # Gets an instance of an the relation class.
+    #
+    # With FriendlyId this will be a subclass of ActiveRecord::Relation, rather than
+    # Relation itself, in order to avoid tainting all Active Record models with
+    # FriendlyId.
+    #
+    # Note that this method is essentially copied and pasted from Rails 3.2.9.rc1,
+    # with the exception of changing the relation class. Obviously this is less than
+    # ideal, but I know of no better way to accomplish this.
     # @see #relation_class
-    def relation
-      @relation = nil unless @relation.class <= relation_class
-      @relation ||= relation_class.new(self, arel_table)
-      super
+    def relation #:nodoc:
+      relation = relation_class.new(self, arel_table)
+
+      if finder_needs_type_condition?
+        relation.where(type_condition).create_with(inheritance_column.to_sym => sti_name)
+      else
+        relation
+      end
     end
+    
 
     # Gets (and if necessary, creates) a subclass of the model's relation class.
     #
@@ -258,6 +271,9 @@ often better and easier to use {FriendlyId::Slugged slugs}.
       end
     end
   end
+
+
+
 
   # Instance methods that will be added to all classes using FriendlyId.
   module Model
