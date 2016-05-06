@@ -73,7 +73,10 @@ method.
 
     def create_slug
       return unless friendly_id
-      return if slugs.first.try(:slug) == friendly_id
+      # return if slugs.first.try(:slug) == friendly_id
+      # champ : there could be other old slug (not the latest one).
+      return if slugs.map { |e| e.try(:slug) }.include?(friendly_id)
+
       # Allow reversion back to a previously used slug
       relation = slugs.where(:slug => friendly_id)
       result = relation.select("id").lock(true).all
@@ -93,6 +96,7 @@ method.
         with_old_friendly_id(id) {|x| find_one_without_friendly_id(x)} or
         find_one_without_friendly_id(id)
       end
+
 
       # Search for a record in the slugs table using the specified slug.
       def exists?(id = false)

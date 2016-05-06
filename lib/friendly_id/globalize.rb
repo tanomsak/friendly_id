@@ -67,10 +67,38 @@ current locale:
       model_class.instance_eval do
         friendly_id_config.use :slugged
         relation_class.send :include, FinderMethods
+
+        if ancestors.select {|o| o.class == Module}.include?(FriendlyId::History)
+          after_save :create_globalize_slug
+        end
+
         include Model
         # Check if slug field is enabled to be translated with Globalize
         unless respond_to?('translated_attribute_names') || translated_attribute_names.exclude?(friendly_id_config.query_field.to_sym)
           puts "\n[FriendlyId] You need to translate '#{friendly_id_config.query_field}' field with Globalize (add 'translates :#{friendly_id_config.query_field}' in your model '#{self.class.name}')\n\n"
+        end
+      end
+    end
+
+    private 
+
+    def create_globalize_slug
+      I18n.available_locales.each do |locale|
+        unless locale == I18n.default_locale        
+          I18n.with_locale(locale) do
+
+            return unless friendly_id          
+            return if slugs.map { |e| e.try(:slug) }.include?(friendly_id)
+
+            # Allow reversion back to a previously used slug
+            relation = slugs.where(:slug => friendly_id)
+            result = relation.select("id").lock(true).all
+            relation.delete_all unless result.empty?
+            slugs.create! do |record|
+              record.slug = friendly_id
+            end   
+                   
+          end
         end
       end
     end
@@ -96,7 +124,7 @@ current locale:
         return super if id.unfriendly_id?
         found = where(@klass.friendly_id_config.query_field => id).first
         found = includes(:translations).
-                where(translation_class.arel_table[:locale].in([I18n.locale, I18n.default_locale])).
+                where(translation_class.arel_table[:locale].in([I18n.locale,I18n.default_locale])).
                 where(translation_class.arel_table[@klass.friendly_id_config.query_field].eq(id)).first if found.nil?
 
         if found
